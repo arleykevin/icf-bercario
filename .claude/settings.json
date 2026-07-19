@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(unzip -o -q README_Projeto_App_Bercario.docx -d /tmp/docx_extract)"
+    ]
+  }
+}

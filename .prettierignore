@@ -1,0 +1,15 @@
+.next
+node_modules
+coverage
+playwright-report
+test-results
+public/sw.js
+public/swe-worker-*.js
+public/workbox-*.js
+public/icons
+supabase/.branches
+supabase/.temp
+PLANO.md
+README_Projeto_App_Bercario.docx
+gemini-code-1784493620580.py
+package-lock.json
