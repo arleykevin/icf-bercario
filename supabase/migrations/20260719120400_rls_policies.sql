@@ -29,10 +29,12 @@ create policy organizations_update on public.organizations
   with check (public.is_org_admin(id));
 
 -- PROFILES ------------------------------------------------------------------
--- O próprio perfil, ou perfis de quem compartilha uma organização (exibir nomes na turma).
+-- Fase 0: apenas o PRÓPRIO perfil. A visibilidade relacional (professor↔responsável
+-- da mesma turma) é ADICIONADA na Fase 1 via public.can_see_profile(), quando existem
+-- turmas/vínculos — evitando o vazamento do roster inteiro da escola.
 create policy profiles_select on public.profiles
   for select to authenticated
-  using (id = (select auth.uid()) or public.shares_org(id));
+  using (id = (select auth.uid()));
 
 create policy profiles_insert_self on public.profiles
   for insert to authenticated
@@ -44,12 +46,16 @@ create policy profiles_update_self on public.profiles
   with check (id = (select auth.uid()));
 
 -- ORG_MEMBERS ---------------------------------------------------------------
--- Vê a própria linha e a composição da sua organização; admin da org gerencia.
+-- Vê a PRÓPRIA linha (ativa); o roster completo é só para admin (não expor a
+-- composição de pessoal/famílias a qualquer membro). Admin vê tudo, inclusive histórico.
 -- OBS: o PRIMEIRO admin de uma escola nova é semeado via service_role (bootstrap),
 -- pois ainda não existe membership para satisfazer is_org_admin().
 create policy org_members_select on public.org_members
   for select to authenticated
-  using (profile_id = (select auth.uid()) or public.is_org_member(organization_id));
+  using (
+    public.is_org_admin(organization_id)
+    or (deleted_at is null and is_active and profile_id = (select auth.uid()))
+  );
 
 create policy org_members_admin_insert on public.org_members
   for insert to authenticated

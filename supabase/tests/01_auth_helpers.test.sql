@@ -1,6 +1,6 @@
 -- =============================================================================
 -- Testa a LÓGICA de autorização que as policies RLS usam (is_org_admin,
--- is_org_member, auth_org_id, shares_org, is_admin) com dois tenants isolados.
+-- is_org_member, auth_org_id, can_see_profile, is_admin) com dois tenants isolados.
 -- Roda como postgres e injeta a identidade via request.jwt.claims -> auth.uid()
 -- (as funções são SECURITY DEFINER e leem o claim, não o role).
 --
@@ -48,10 +48,10 @@ select is(public.auth_org_id(), 'aaaa0000-0000-0000-0000-000000000001'::uuid,
   'auth_org_id() de A resolve para a org A');
 select ok(public.is_admin(),
   'admin A é admin em alguma organização');
-select ok(public.shares_org('a1000000-0000-0000-0000-00000000001a'),
-  'admin A compartilha organização com o guardião A');
-select ok(not public.shares_org('b0000000-0000-0000-0000-00000000000b'),
-  'admin A NÃO compartilha organização com o admin B');
+select ok(public.can_see_profile('a1000000-0000-0000-0000-00000000001a'),
+  'admin A pode ver o perfil do guardião A (admin da mesma org)');
+select ok(not public.can_see_profile('b0000000-0000-0000-0000-00000000000b'),
+  'admin A NÃO pode ver o perfil do admin B (outra escola)');
 
 -- === Identidade: GUARDIÃO A (organização A) ===
 set local "request.jwt.claims" to '{"sub":"a1000000-0000-0000-0000-00000000001a"}';

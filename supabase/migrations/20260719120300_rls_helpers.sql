@@ -3,9 +3,21 @@
 -- SECURITY DEFINER: rodam como owner (que ignora RLS) para evitar recursão de
 -- policy sobre org_members. search_path travado em ''. Ver PLANO.md §5.3.
 --
--- Fase 1 adicionará teaches_child(uuid) e is_guardian_of(uuid) junto com as
--- tabelas de turma/criança/guardianship.
+-- Todo helper é gateado por current_user_active(): um profile desativado
+-- (offboarding) perde acesso em TODAS as organizações de uma vez.
 -- =============================================================================
+
+-- O profile do usuário atual está ativo? (offboarding real — PLANO.md §5.2)
+create or replace function public.current_user_active()
+returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.profiles p
+    where p.id = (select auth.uid())
+      and p.is_active and p.deleted_at is null
+  );
+$$;
 
 -- Organização "corrente" do usuário (primeira ativa) — conveniência de Fase 0.
 create or replace function public.auth_org_id()
@@ -16,6 +28,7 @@ as $$
   from public.org_members om
   where om.profile_id = (select auth.uid())
     and om.is_active and om.deleted_at is null
+    and public.current_user_active()
   order by om.created_at asc
   limit 1;
 $$;
@@ -25,7 +38,7 @@ create or replace function public.is_org_member(target_org uuid)
 returns boolean
 language sql stable security definer set search_path = ''
 as $$
-  select exists (
+  select public.current_user_active() and exists (
     select 1 from public.org_members om
     where om.profile_id = (select auth.uid())
       and om.organization_id = target_org
@@ -38,7 +51,7 @@ create or replace function public.is_org_admin(target_org uuid)
 returns boolean
 language sql stable security definer set search_path = ''
 as $$
-  select exists (
+  select public.current_user_active() and exists (
     select 1 from public.org_members om
     where om.profile_id = (select auth.uid())
       and om.organization_id = target_org
@@ -52,7 +65,7 @@ create or replace function public.is_admin()
 returns boolean
 language sql stable security definer set search_path = ''
 as $$
-  select exists (
+  select public.current_user_active() and exists (
     select 1 from public.org_members om
     where om.profile_id = (select auth.uid())
       and om.role = 'admin'
@@ -60,26 +73,14 @@ as $$
   );
 $$;
 
--- O usuário atual compartilha alguma organização ativa com o profile alvo?
-create or replace function public.shares_org(target_profile uuid)
-returns boolean
-language sql stable security definer set search_path = ''
-as $$
-  select exists (
-    select 1
-    from public.org_members a
-    join public.org_members b on a.organization_id = b.organization_id
-    where a.profile_id = (select auth.uid())
-      and b.profile_id = target_profile
-      and a.is_active and b.is_active
-      and a.deleted_at is null and b.deleted_at is null
-  );
-$$;
-
 grant execute on function
+  public.current_user_active(),
   public.auth_org_id(),
   public.is_org_member(uuid),
   public.is_org_admin(uuid),
-  public.is_admin(),
-  public.shares_org(uuid)
+  public.is_admin()
 to authenticated;
+
+-- Nota: a visibilidade de PERFIS DE OUTRAS PESSOAS (professor↔responsável↔co-responsável)
+-- é resolvida por public.can_see_profile() na Fase 1, quando existem turmas/vínculos.
+-- Aqui (Fase 0) profiles_select permite apenas o próprio perfil.

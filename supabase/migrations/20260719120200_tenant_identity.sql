@@ -28,7 +28,7 @@ create table public.profiles (
   full_name   text not null,
   avatar_url  text,
   phone       text,
-  is_active   boolean not null default true,   -- offboarding: checado nas policies
+  is_active   boolean not null default true,   -- offboarding: gateado por current_user_active()
   locale      text not null default 'pt-BR',
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now(),

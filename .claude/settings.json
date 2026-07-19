@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(unzip -o -q README_Projeto_App_Bercario.docx -d /tmp/docx_extract)"
+      "Bash(unzip -o -q README_Projeto_App_Bercario.docx -d /tmp/docx_extract)",
+      "Bash(awk '/^## 5|^### 5|^## .*5\\\\./{p=1} /^## 6|^## 7/{p=0} p' \"c:/PROJETOS/icf-bercario/PLANO.md\")"
     ]
   }
 }
