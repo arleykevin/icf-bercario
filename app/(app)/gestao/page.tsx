@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { InviteForm } from "@/features/convites/components/invite-form";
 import { ImportForm } from "@/features/onboarding/components/import-form";
+import { ClassManager } from "@/features/turmas/components/class-manager";
 
 export const metadata: Metadata = {
   title: "Gestão",
@@ -49,6 +50,30 @@ export default async function GestaoPage() {
     .is("deleted_at", null)
     .order("full_name");
 
+  const { data: classesData } = await supabase
+    .from("classes")
+    .select("id, name, age_group")
+    .eq("organization_id", orgId)
+    .is("deleted_at", null)
+    .order("name");
+  const classes = (classesData ?? []) as {
+    id: string;
+    name: string;
+    age_group: string | null;
+  }[];
+
+  const { data: enrollData } = await supabase
+    .from("enrollments")
+    .select("class_id, child_id")
+    .is("deleted_at", null);
+  const enrolledByClass: Record<string, string[]> = {};
+  for (const e of (enrollData ?? []) as {
+    class_id: string;
+    child_id: string;
+  }[]) {
+    (enrolledByClass[e.class_id] ??= []).push(e.child_id);
+  }
+
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-10 px-6 py-10">
       <h1 className="text-foreground text-2xl font-semibold">
@@ -66,6 +91,23 @@ export default async function GestaoPage() {
           Cadastrar crianças
         </h2>
         <ImportForm />
+      </section>
+
+      <section
+        aria-labelledby="turmas-heading"
+        className="border-border bg-surface flex flex-col gap-4 rounded-[var(--radius-lg)] border p-6"
+      >
+        <h2
+          id="turmas-heading"
+          className="text-foreground text-lg font-semibold"
+        >
+          Turmas e matrículas
+        </h2>
+        <ClassManager
+          classes={classes}
+          students={students ?? []}
+          enrolledByClass={enrolledByClass}
+        />
       </section>
 
       <section
