@@ -223,7 +223,9 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+# ATIVADO (auditoria de segurança): impede que alguém use o e-mail de um convidado
+# sem provar posse e aceite convite de responsável/admin de um menor. Ver PLANO.md §5.2.
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.

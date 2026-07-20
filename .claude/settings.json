@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(unzip -o -q README_Projeto_App_Bercario.docx -d /tmp/docx_extract)",
-      "Bash(awk '/^## 5|^### 5|^## .*5\\\\./{p=1} /^## 6|^## 7/{p=0} p' \"c:/PROJETOS/icf-bercario/PLANO.md\")"
+      "Bash(awk '/^## 5|^### 5|^## .*5\\\\./{p=1} /^## 6|^## 7/{p=0} p' \"c:/PROJETOS/icf-bercario/PLANO.md\")",
+      "Bash(curl -s -o /dev/null -w \"auth health: HTTP %{http_code}\\\\n\" \"https://zjxgcacttiblhkhgjckx.supabase.co/auth/v1/health\" -H \"apikey: sb_publishable_yqhHE4t-1o6zKCulCc_Fbw_DRzsDfxH\")",
+      "Bash(curl -s -o /dev/null -w \"rest root: HTTP %{http_code}\\\\n\" \"https://zjxgcacttiblhkhgjckx.supabase.co/rest/v1/\" -H \"apikey: sb_publishable_yqhHE4t-1o6zKCulCc_Fbw_DRzsDfxH\")",
+      "Bash(curl -s -o /dev/null -w 'rest \\(apikey+bearer\\): HTTP %{http_code}\\\\n' https://zjxgcacttiblhkhgjckx.supabase.co/rest/v1/ -H 'apikey: sb_publishable_yqhHE4t-1o6zKCulCc_Fbw_DRzsDfxH' -H 'Authorization: Bearer sb_publishable_yqhHE4t-1o6zKCulCc_Fbw_DRzsDfxH')",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' https://zjxgcacttiblhkhgjckx.supabase.co/rest/v1/naoexiste123?select=* -H 'apikey: sb_publishable_yqhHE4t-1o6zKCulCc_Fbw_DRzsDfxH' -H 'Authorization: Bearer sb_publishable_yqhHE4t-1o6zKCulCc_Fbw_DRzsDfxH')"
     ]
   }
 }

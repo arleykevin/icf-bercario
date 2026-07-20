@@ -45,6 +45,7 @@ export async function updateSession(request: NextRequest) {
     pathname === "/" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/auth") ||
+    pathname.startsWith("/convite") ||
     pathname.startsWith("/api/health") ||
     pathname.startsWith("/offline");
 
