@@ -7,8 +7,9 @@ import { withSentryConfig } from "@sentry/nextjs";
 process.env.SERWIST_SUPPRESS_TURBOPACK_WARNING ??= "1";
 
 /**
- * Headers de segurança base (PLANO.md §5.2). A CSP estrita baseada em nonce entra na
- * Fase 2 (endurecimento), pois exige injeção por requisição no middleware.
+ * Headers de segurança estáticos (PLANO.md §5.2). A CSP estrita baseada em nonce é
+ * injetada por requisição no middleware (`lib/supabase/middleware.ts` + `lib/security/csp.ts`),
+ * pois o nonce muda a cada request; aqui ficam só os headers constantes.
  */
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
