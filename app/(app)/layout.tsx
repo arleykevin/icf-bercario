@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { OutboxFlusher } from "@/features/diario/components/outbox-flusher";
+import { SessionShell } from "@/features/tablet/components/session-shell";
 
 /**
  * Layout da área autenticada. Guard de servidor: sem usuário → /login.
@@ -20,9 +21,12 @@ export default async function AppLayout({
     redirect("/login");
   }
 
+  // Tablet de sala: o SessionGuard trava/encerra a sessão por inatividade.
+  const { data: hasPin } = await supabase.rpc("has_my_pin");
+
   return (
     <div className="min-h-dvh">
-      {children}
+      <SessionShell hasPin={hasPin === true}>{children}</SessionShell>
       <OutboxFlusher />
     </div>
   );

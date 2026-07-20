@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ROLE_LABELS, isAppRole } from "@/lib/auth/roles";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
 import { acceptMyInvitations } from "@/features/convites/actions";
+import { PinSetup } from "@/features/tablet/components/pin-setup";
 
 type PendingInvite = {
   invitation_id: string;
@@ -104,6 +105,12 @@ export default async function InicioPage() {
     }
   }
   const classList = [...classes.entries()].map(([id, name]) => ({ id, name }));
+
+  // Equipe (não-responsável) usa o tablet de sala → pode configurar o PIN.
+  const isStaff = memberships.some((m) => m.role !== "guardian");
+  const { data: hasPin } = isStaff
+    ? await supabase.rpc("has_my_pin")
+    : { data: false };
 
   const firstName = (profile?.full_name ?? "").split(" ")[0] || "Bem-vindo(a)";
 
@@ -259,6 +266,21 @@ export default async function InicioPage() {
               Cadastrar crianças e convidar
             </Link>
           </div>
+        </section>
+      ) : null}
+
+      {isStaff ? (
+        <section
+          aria-labelledby="tablet-heading"
+          className="border-border bg-surface flex flex-col gap-4 rounded-[var(--radius-lg)] border p-6"
+        >
+          <h2
+            id="tablet-heading"
+            className="text-foreground text-base font-semibold"
+          >
+            Segurança do tablet
+          </h2>
+          <PinSetup hasPin={hasPin === true} />
         </section>
       ) : null}
 
