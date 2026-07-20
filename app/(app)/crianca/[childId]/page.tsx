@@ -10,6 +10,8 @@ import {
   AdministerPanel,
   type MedAuthorization,
 } from "@/features/medicamentos/components/administer-panel";
+import { summarizeDay } from "@/features/resumo/summarize-day";
+import { DaySummary } from "@/features/resumo/components/day-summary";
 
 export const metadata: Metadata = {
   title: "Diário",
@@ -70,6 +72,16 @@ export default async function CriancaPage({
   const authorizations = (authData ?? []) as MedAuthorization[];
   const firstName = String(child.full_name).split(" ")[0];
 
+  // Resumo do dia: agrega os eventos de hoje (fuso da escola) num digest.
+  const dayKey = (iso: string) =>
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+    }).format(new Date(iso));
+  const todayKey = dayKey(new Date().toISOString());
+  const daySummary = summarizeDay(
+    entries.filter((e) => dayKey(e.occurred_at) === todayKey),
+  );
+
   // Fotos: signed URLs de curta duração (10 min) — bucket é privado. Usa o client
   // COM RLS (nunca service_role): o Storage re-autoriza cada caminho por child_media_select,
   // então um media_path forjado não assina/baixa foto de terceiro.
@@ -99,6 +111,8 @@ export default async function CriancaPage({
           A rotina do dia, com carinho e transparência.
         </p>
       </header>
+
+      <DaySummary summary={daySummary} childFirstName={firstName} />
 
       {canWrite ? (
         <section className="border-border bg-surface rounded-[var(--radius-lg)] border p-5">
