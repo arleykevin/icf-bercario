@@ -155,6 +155,17 @@ export default async function InicioPage() {
         </section>
       ) : null}
 
+      {memberships.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/calendario"
+            className="border-border bg-surface hover:border-brand inline-flex min-h-[var(--touch-min)] items-center gap-2 rounded-[var(--radius-lg)] border px-4 text-sm font-medium"
+          >
+            📅 Calendário
+          </Link>
+        </div>
+      ) : null}
+
       {children.length > 0 ? (
         <section
           aria-labelledby="filhos-heading"
