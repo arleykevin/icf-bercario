@@ -36,7 +36,7 @@ export default async function CriancaPage({
       supabase
         .from("diary_entries")
         .select(
-          "id, child_id, entry_type, occurred_at, note, temperature_c, payload, recorded_by",
+          "id, child_id, entry_type, occurred_at, note, temperature_c, payload, recorded_by, media_path",
         )
         .eq("child_id", childId)
         .is("deleted_at", null)
@@ -47,6 +47,22 @@ export default async function CriancaPage({
   const canWrite = isAdmin === true || teaches === true;
   const entries = (entriesData ?? []) as DiaryEntryRow[];
   const firstName = String(child.full_name).split(" ")[0];
+
+  // Fotos: signed URLs de curta duração (10 min) — bucket é privado. Usa o client
+  // COM RLS (nunca service_role): o Storage re-autoriza cada caminho por child_media_select,
+  // então um media_path forjado não assina/baixa foto de terceiro.
+  const paths = entries
+    .map((e) => e.media_path)
+    .filter((p): p is string => Boolean(p));
+  const mediaUrls: Record<string, string> = {};
+  if (paths.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from("child-media")
+      .createSignedUrls(paths, 600);
+    for (const s of signed ?? []) {
+      if (s.path && s.signedUrl) mediaUrls[s.path] = s.signedUrl;
+    }
+  }
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-10">
@@ -72,7 +88,7 @@ export default async function CriancaPage({
       ) : null}
 
       <section aria-label="Linha do tempo">
-        <Timeline entries={entries} />
+        <Timeline entries={entries} mediaUrls={mediaUrls} />
       </section>
     </main>
   );

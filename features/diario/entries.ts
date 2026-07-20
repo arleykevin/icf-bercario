@@ -12,6 +12,7 @@ export type DiaryEntryRow = {
   temperature_c: number | string | null;
   payload: Record<string, unknown> | null;
   recorded_by: string | null;
+  media_path: string | null;
 };
 
 type EntryMeta = {

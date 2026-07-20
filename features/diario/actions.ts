@@ -14,6 +14,13 @@ export type RecordState = {
   count?: number;
 };
 
+const MAX_PHOTO_BYTES = 8 * 1024 * 1024; // 8 MiB (espelha o file_size_limit do bucket)
+const PHOTO_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
 function optStr(formData: FormData, key: string): string | undefined {
   const v = formData.get(key);
   const s = typeof v === "string" ? v.trim() : "";
@@ -92,6 +99,26 @@ export async function recordDiaryEntries(
   const payload = buildPayload(v);
   const batchId = v.childIds.length > 1 ? crypto.randomUUID() : null;
 
+  // Foto: só para registro de UMA criança. Sobe pro bucket PRIVADO (a RLS de storage
+  // garante que só quem cuida da criança envia); a UI depois lê via signed URL.
+  let mediaPath: string | null = null;
+  const photo = formData.get("photo");
+  if (photo instanceof File && photo.size > 0 && v.childIds.length === 1) {
+    const ext = PHOTO_EXT[photo.type];
+    if (!ext) return { error: "A foto deve ser JPG, PNG ou WEBP." };
+    if (photo.size > MAX_PHOTO_BYTES) {
+      return { error: "Foto muito grande (máx. 8 MB)." };
+    }
+    const path = `${organizationId}/${v.childIds[0]}/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("child-media")
+      .upload(path, photo, { contentType: photo.type, upsert: false });
+    if (upErr) {
+      return { error: "Não foi possível enviar a foto. Tente de novo." };
+    }
+    mediaPath = path;
+  }
+
   const insertRows = v.childIds.map((childId) => ({
     organization_id: organizationId,
     child_id: childId,
@@ -103,6 +130,7 @@ export async function recordDiaryEntries(
     batch_id: batchId,
     idempotency_key: crypto.randomUUID(),
     recorded_by: user.id,
+    media_path: mediaPath,
   }));
 
   const { error, data } = await supabase

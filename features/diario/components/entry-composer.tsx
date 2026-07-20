@@ -100,6 +100,25 @@ export function EntryComposer({
 
       <TypeFields type={type} />
 
+      {/* Foto — só ao registrar para UMA criança (Storage privado + signed URL) */}
+      {childIds.length === 1 ? (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="entry-photo" className={labelClass}>
+            Foto (opcional)
+          </label>
+          <input
+            id="entry-photo"
+            name="photo"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="text-muted file:bg-brand-soft file:text-brand text-sm file:mr-3 file:min-h-[var(--touch-min)] file:rounded-[var(--radius-lg)] file:border-0 file:px-4 file:font-medium"
+          />
+          <span className="text-muted text-xs">
+            JPG, PNG ou WEBP · até 8 MB
+          </span>
+        </div>
+      ) : null}
+
       {/* Nota (todos os tipos) */}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="entry-note" className={labelClass}>

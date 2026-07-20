@@ -30,7 +30,13 @@ function dayHeading(key: string): string {
   }).format(new Date(y, m - 1, d));
 }
 
-export function Timeline({ entries }: { entries: DiaryEntryRow[] }) {
+export function Timeline({
+  entries,
+  mediaUrls = {},
+}: {
+  entries: DiaryEntryRow[];
+  mediaUrls?: Record<string, string>;
+}) {
   if (entries.length === 0) {
     return (
       <div className="border-border bg-surface text-muted rounded-[var(--radius-lg)] border border-dashed p-8 text-center text-sm">
@@ -58,7 +64,13 @@ export function Timeline({ entries }: { entries: DiaryEntryRow[] }) {
           </h3>
           <ul className="flex flex-col gap-2">
             {group.items.map((entry) => (
-              <EntryCard key={entry.id} entry={entry} />
+              <EntryCard
+                key={entry.id}
+                entry={entry}
+                mediaUrl={
+                  entry.media_path ? mediaUrls[entry.media_path] : undefined
+                }
+              />
             ))}
           </ul>
         </section>
@@ -67,7 +79,13 @@ export function Timeline({ entries }: { entries: DiaryEntryRow[] }) {
   );
 }
 
-function EntryCard({ entry }: { entry: DiaryEntryRow }) {
+function EntryCard({
+  entry,
+  mediaUrl,
+}: {
+  entry: DiaryEntryRow;
+  mediaUrl?: string;
+}) {
   const meta = ENTRY_META[entry.entry_type] ?? ENTRY_META.note;
   const isHealth = meta.tone === "health";
   const summary = summarizeEntry(entry);
@@ -110,6 +128,15 @@ function EntryCard({ entry }: { entry: DiaryEntryRow }) {
         </div>
         <p className="text-foreground text-sm">{summary}</p>
         {extraNote ? <p className="text-muted text-sm">{extraNote}</p> : null}
+        {mediaUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={mediaUrl}
+            alt={`Foto de ${meta.label.toLowerCase()}`}
+            loading="lazy"
+            className="border-border mt-1 max-h-72 w-full rounded-[var(--radius-lg)] border object-cover"
+          />
+        ) : null}
       </div>
     </li>
   );
