@@ -110,6 +110,12 @@ export default async function CriancaPage({
         <p className="text-muted text-sm">
           A rotina do dia, com carinho e transparência.
         </p>
+        <Link
+          href={`/crianca/${childId}/perfil`}
+          className="text-brand mt-1 w-fit text-sm font-medium"
+        >
+          Ver perfil (saúde, autorizados) →
+        </Link>
       </header>
 
       <DaySummary summary={daySummary} childFirstName={firstName} />
