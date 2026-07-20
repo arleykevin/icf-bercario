@@ -4,6 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { InviteForm } from "@/features/convites/components/invite-form";
 import { ImportForm } from "@/features/onboarding/components/import-form";
 import { ClassManager } from "@/features/turmas/components/class-manager";
+import {
+  MemberList,
+  type TeamMember,
+} from "@/features/equipe/components/member-list";
 
 export const metadata: Metadata = {
   title: "Gestão",
@@ -61,6 +65,38 @@ export default async function GestaoPage() {
     name: string;
     age_group: string | null;
   }[];
+
+  const { data: membersData } = await supabase
+    .from("org_members")
+    .select("profile_id, role")
+    .eq("organization_id", orgId)
+    .eq("is_active", true)
+    .is("deleted_at", null)
+    .neq("role", "guardian")
+    .order("role");
+  const memberRows = (membersData ?? []) as {
+    profile_id: string;
+    role: string;
+  }[];
+
+  const memberIds = memberRows.map((m) => m.profile_id);
+  const { data: profilesData } = memberIds.length
+    ? await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", memberIds)
+    : { data: [] };
+  const nameById = new Map(
+    ((profilesData ?? []) as { id: string; full_name: string }[]).map((p) => [
+      p.id,
+      p.full_name,
+    ]),
+  );
+  const members: TeamMember[] = memberRows.map((m) => ({
+    profileId: m.profile_id,
+    role: m.role,
+    fullName: nameById.get(m.profile_id) ?? "",
+  }));
 
   const { data: enrollData } = await supabase
     .from("enrollments")
@@ -121,6 +157,29 @@ export default async function GestaoPage() {
           Convidar equipe e responsáveis
         </h2>
         <InviteForm organizationId={orgId} students={students ?? []} />
+      </section>
+
+      <section
+        aria-labelledby="equipe-heading"
+        className="border-border bg-surface flex flex-col gap-4 rounded-[var(--radius-lg)] border p-6"
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            id="equipe-heading"
+            className="text-foreground text-lg font-semibold"
+          >
+            Equipe e acessos
+          </h2>
+          <p className="text-muted text-sm">
+            Remover o acesso corta a entrada na hora. Quem sai da instituição
+            tem a conta bloqueada.
+          </p>
+        </div>
+        <MemberList
+          organizationId={orgId}
+          currentUserId={user!.id}
+          members={members}
+        />
       </section>
     </main>
   );
