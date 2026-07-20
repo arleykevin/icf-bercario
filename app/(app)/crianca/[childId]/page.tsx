@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 import { EntryComposer } from "@/features/diario/components/entry-composer";
 import { Timeline } from "@/features/diario/components/timeline";
 import type { DiaryEntryRow } from "@/features/diario/entries";
+import { AuthorizeForm } from "@/features/medicamentos/components/authorize-form";
+import {
+  AdministerPanel,
+  type MedAuthorization,
+} from "@/features/medicamentos/components/administer-panel";
 
 export const metadata: Metadata = {
   title: "Diário",
@@ -29,23 +34,40 @@ export default async function CriancaPage({
 
   const orgId = child.organization_id as string;
 
-  const [{ data: isAdmin }, { data: teaches }, { data: entriesData }] =
-    await Promise.all([
-      supabase.rpc("is_org_admin", { target_org: orgId }),
-      supabase.rpc("teaches_child", { target_child: childId }),
-      supabase
-        .from("diary_entries")
-        .select(
-          "id, child_id, entry_type, occurred_at, note, temperature_c, payload, recorded_by, media_path",
-        )
-        .eq("child_id", childId)
-        .is("deleted_at", null)
-        .order("occurred_at", { ascending: false })
-        .limit(100),
-    ]);
+  const today = new Date().toISOString().slice(0, 10);
+  const [
+    { data: isAdmin },
+    { data: teaches },
+    { data: isLegal },
+    { data: entriesData },
+    { data: authData },
+  ] = await Promise.all([
+    supabase.rpc("is_org_admin", { target_org: orgId }),
+    supabase.rpc("teaches_child", { target_child: childId }),
+    supabase.rpc("is_legal_guardian_of", { target_child: childId }),
+    supabase
+      .from("diary_entries")
+      .select(
+        "id, child_id, entry_type, occurred_at, note, temperature_c, payload, recorded_by, media_path",
+      )
+      .eq("child_id", childId)
+      .is("deleted_at", null)
+      .order("occurred_at", { ascending: false })
+      .limit(100),
+    supabase
+      .from("medication_authorizations")
+      .select(
+        "id, medication_name, dosage, route, instructions, valid_from, valid_until",
+      )
+      .eq("child_id", childId)
+      .gte("valid_until", today)
+      .order("valid_until", { ascending: false }),
+  ]);
 
   const canWrite = isAdmin === true || teaches === true;
+  const isLegalGuardian = isLegal === true;
   const entries = (entriesData ?? []) as DiaryEntryRow[];
+  const authorizations = (authData ?? []) as MedAuthorization[];
   const firstName = String(child.full_name).split(" ")[0];
 
   // Fotos: signed URLs de curta duração (10 min) — bucket é privado. Usa o client
@@ -84,6 +106,29 @@ export default async function CriancaPage({
             Registrar
           </h2>
           <EntryComposer childIds={[childId]} />
+        </section>
+      ) : null}
+
+      {isLegalGuardian || authorizations.length > 0 ? (
+        <section className="border-border bg-surface flex flex-col gap-4 rounded-[var(--radius-lg)] border p-5">
+          <h2 className="text-foreground text-base font-semibold">
+            Medicamentos
+          </h2>
+          {isLegalGuardian ? (
+            <details className="flex flex-col gap-3">
+              <summary className="text-brand min-h-[var(--touch-min)] cursor-pointer text-sm font-medium">
+                Autorizar um medicamento
+              </summary>
+              <div className="mt-3">
+                <AuthorizeForm childId={childId} />
+              </div>
+            </details>
+          ) : null}
+          <AdministerPanel
+            childId={childId}
+            authorizations={authorizations}
+            canAdminister={canWrite}
+          />
         </section>
       ) : null}
 

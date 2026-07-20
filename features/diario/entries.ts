@@ -48,6 +48,13 @@ const DIAPER_TEXT: Record<string, string> = {
   seca: "fralda seca",
 };
 
+const MED_STATUS_TEXT: Record<string, string> = {
+  administered: "administrado",
+  refused: "recusado",
+  skipped: "pulado",
+  postponed: "adiado",
+};
+
 const MOOD_TEXT: Record<string, string> = {
   feliz: "feliz 😊",
   tranquilo: "tranquilo(a) 🙂",
@@ -101,8 +108,17 @@ export function summarizeEntry(entry: DiaryEntryRow): string {
       const t = formatTemperature(entry.temperature_c);
       return t ? `Temperatura ${t}` : "Registro de saúde";
     }
-    case "medication":
-      return "Medicamento administrado";
+    case "medication": {
+      const name = str(p, "name");
+      const dosage = str(p, "dosage");
+      const status = str(p, "status");
+      const head = [name, dosage].filter(Boolean).join(" ");
+      const statusPt = status ? (MED_STATUS_TEXT[status] ?? "") : "";
+      return (
+        [head || "Medicamento", statusPt].filter(Boolean).join(" — ") ||
+        "Medicamento administrado"
+      );
+    }
     case "mood": {
       const mood = str(p, "mood");
       return mood ? (MOOD_TEXT[mood] ?? mood) : "Humor";
