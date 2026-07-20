@@ -89,3 +89,21 @@ export async function acceptInvitation(formData: FormData) {
   revalidatePath("/", "layout");
   redirect("/inicio");
 }
+
+/**
+ * Aceite DENTRO do app: assume os convites pendentes que casam com o e-mail
+ * verificado do usuário (RPC accept_invitation_by_email). Usado no /inicio para quem
+ * foi convidado — não depende do link nem de e-mail enviado.
+ */
+export async function acceptMyInvitations() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  await supabase.rpc("accept_invitation_by_email");
+
+  revalidatePath("/", "layout");
+  redirect("/inicio");
+}

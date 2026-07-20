@@ -3,6 +3,14 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ROLE_LABELS, isAppRole } from "@/lib/auth/roles";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
+import { acceptMyInvitations } from "@/features/convites/actions";
+
+type PendingInvite = {
+  invitation_id: string;
+  organization_name: string;
+  role: string;
+  child_name: string | null;
+};
 
 export const metadata: Metadata = {
   title: "Início",
@@ -30,6 +38,11 @@ export default async function InicioPage() {
   const adminOrgIds = memberships
     .filter((m) => m.role === "admin")
     .map((m) => m.organization_id);
+
+  // Convites pendentes para o e-mail (verificado) do usuário — quem foi convidado
+  // aceita aqui mesmo, sem precisar do link/e-mail.
+  const { data: pendingData } = await supabase.rpc("my_pending_invitations");
+  const pendingInvites = (pendingData ?? []) as PendingInvite[];
 
   // Filhos (responsável) e turmas lecionadas (professor) em paralelo.
   const [{ data: guardKids }, { data: taughtLinks }] = await Promise.all([
@@ -105,6 +118,42 @@ export default async function InicioPage() {
         </div>
         <SignOutButton />
       </header>
+
+      {pendingInvites.length > 0 ? (
+        <section
+          aria-labelledby="convite-heading"
+          className="border-brand bg-brand-soft flex flex-col gap-3 rounded-[var(--radius-lg)] border p-6"
+        >
+          <h2
+            id="convite-heading"
+            className="text-foreground text-base font-semibold"
+          >
+            Convite pendente
+          </h2>
+          <ul className="flex flex-col gap-1">
+            {pendingInvites.map((inv) => (
+              <li key={inv.invitation_id} className="text-foreground text-sm">
+                <strong>{inv.organization_name}</strong> —{" "}
+                {isAppRole(inv.role) ? ROLE_LABELS[inv.role] : inv.role}
+                {inv.child_name ? (
+                  <>
+                    {" "}
+                    de <strong>{inv.child_name}</strong>
+                  </>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          <form action={acceptMyInvitations}>
+            <button
+              type="submit"
+              className="bg-brand text-brand-foreground focus-visible:ring-ring inline-flex min-h-[var(--touch-min)] w-fit items-center justify-center rounded-[var(--radius-lg)] px-5 font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+            >
+              Aceitar convite
+            </button>
+          </form>
+        </section>
+      ) : null}
 
       {children.length > 0 ? (
         <section
@@ -220,11 +269,17 @@ export default async function InicioPage() {
               </li>
             ))}
           </ul>
+        ) : pendingInvites.length > 0 ? (
+          <p className="text-muted mt-3 text-sm">
+            Você tem um convite pendente acima — aceite para ver sua turma ou
+            seus filhos aqui.
+          </p>
         ) : (
           <div className="mt-3 flex flex-col gap-3">
             <p className="text-muted text-sm">
-              Você ainda não tem vínculo com nenhuma escola. Se você é da
-              gestão, crie a sua escola para começar.
+              Você ainda não tem vínculo com nenhuma escola. Se você é da{" "}
+              <strong>gestão</strong>, crie a sua escola para começar. Se foi
+              convidado(a), abra o link que a escola enviou.
             </p>
             <Link
               href="/onboarding"
