@@ -64,6 +64,7 @@ export async function recordDiaryEntries(
     mood: optStr(formData, "mood") as RecordEntryInput["mood"],
     activityTitle: optStr(formData, "activityTitle"),
     occurredAt: optStr(formData, "occurredAt"),
+    idempotencyKey: optStr(formData, "idempotencyKey"),
   };
 
   const parsed = recordEntrySchema.safeParse(input);
@@ -119,7 +120,10 @@ export async function recordDiaryEntries(
     mediaPath = path;
   }
 
-  const insertRows = v.childIds.map((childId) => ({
+  // idempotency_key ESTÁVEL quando o cliente manda uma (fila offline p/ 1 criança),
+  // senão aleatória. O upsert com ignoreDuplicates torna o reenvio (retry) um no-op —
+  // nunca duplica o registro no servidor.
+  const insertRows = v.childIds.map((childId, i) => ({
     organization_id: organizationId,
     child_id: childId,
     entry_type: v.entryType,
@@ -128,14 +132,20 @@ export async function recordDiaryEntries(
     temperature_c: v.temperatureC ?? null,
     payload,
     batch_id: batchId,
-    idempotency_key: crypto.randomUUID(),
+    idempotency_key:
+      v.idempotencyKey && v.childIds.length === 1 && i === 0
+        ? v.idempotencyKey
+        : crypto.randomUUID(),
     recorded_by: user.id,
     media_path: mediaPath,
   }));
 
   const { error, data } = await supabase
     .from("diary_entries")
-    .insert(insertRows)
+    .upsert(insertRows, {
+      onConflict: "organization_id,idempotency_key,occurred_at",
+      ignoreDuplicates: true,
+    })
     .select("id");
 
   if (error) {

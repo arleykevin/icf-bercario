@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { OutboxFlusher } from "@/features/diario/components/outbox-flusher";
 
 /**
  * Layout da área autenticada. Guard de servidor: sem usuário → /login.
@@ -19,5 +20,10 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  return <div className="min-h-dvh">{children}</div>;
+  return (
+    <div className="min-h-dvh">
+      {children}
+      <OutboxFlusher />
+    </div>
+  );
 }

@@ -10,6 +10,7 @@ import {
   type ComposableEntryType,
 } from "../schema";
 import { ENTRY_META } from "../entries";
+import { enqueueEntry } from "../outbox";
 
 const initial: RecordState = {};
 
@@ -47,6 +48,7 @@ export function EntryComposer({
 }) {
   const [state, action, pending] = useActionState(recordDiaryEntries, initial);
   const [type, setType] = useState<ComposableEntryType>("feeding");
+  const [offlineMsg, setOfflineMsg] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const hasSelection = childIds.length > 0;
   const isHealth = type === "health";
@@ -55,10 +57,57 @@ export function EntryComposer({
     if (state.count) formRef.current?.reset();
   }, [state]);
 
+  // Offline (sem conexão), registro de UMA criança sem foto → vai pra fila local e é
+  // reenviado sozinho quando a conexão voltar (idempotência dedup no servidor).
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    const form = e.currentTarget;
+    const photoInput = form.elements.namedItem(
+      "photo",
+    ) as HTMLInputElement | null;
+    const hasPhoto = Boolean(photoInput?.files?.length);
+    const offline = typeof navigator !== "undefined" && !navigator.onLine;
+    if (!offline || childIds.length !== 1 || hasPhoto) return; // segue online
+
+    e.preventDefault();
+    const fd = new FormData(form);
+    const s = (k: string) => {
+      const val = fd.get(k);
+      const t = typeof val === "string" ? val.trim() : "";
+      return t.length ? t : undefined;
+    };
+    const n = (k: string) => {
+      const t = s(k);
+      if (!t) return undefined;
+      const num = Number(t.replace(",", "."));
+      return Number.isFinite(num) ? num : undefined;
+    };
+    void enqueueEntry({
+      idempotencyKey: crypto.randomUUID(),
+      entryType: type,
+      childId: childIds[0],
+      occurredAt: new Date().toISOString(),
+      classId,
+      note: s("note"),
+      temperatureC: n("temperatureC"),
+      acceptance: s("acceptance"),
+      item: s("item"),
+      sleepMinutes: n("sleepMinutes"),
+      diaperKind: s("diaperKind"),
+      mood: s("mood"),
+      activityTitle: s("activityTitle"),
+      createdAt: new Date().toISOString(),
+    }).then(() => window.dispatchEvent(new Event("icf-outbox-changed")));
+    form.reset();
+    setOfflineMsg(
+      "Salvo no aparelho — envia sozinho quando a conexão voltar. 📴",
+    );
+  }
+
   return (
     <form
       ref={formRef}
       action={action}
+      onSubmit={handleSubmit}
       className="flex flex-col gap-4"
       noValidate
     >
@@ -141,6 +190,11 @@ export function EntryComposer({
       {state.message ? (
         <p role="status" className="text-brand text-sm font-medium">
           {state.message}
+        </p>
+      ) : null}
+      {offlineMsg ? (
+        <p role="status" className="text-muted text-sm font-medium">
+          {offlineMsg}
         </p>
       ) : null}
 
