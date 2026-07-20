@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ClassBoard } from "@/features/diario/components/class-board";
+import { PresenceBoard } from "@/features/presenca/components/presence-board";
 
 export const metadata: Metadata = {
   title: "Turma",
@@ -54,6 +55,28 @@ export default async function TurmaPage({
     students = (kids ?? []) as { id: string; full_name: string }[];
   }
 
+  // Presença de hoje: último evento (últimas 24h) por criança define presente/ausente.
+  const presence: Record<string, "present" | "absent"> = {};
+  if (childIds.length > 0) {
+    const since = new Date(
+      new Date().getTime() - 24 * 60 * 60 * 1000,
+    ).toISOString();
+    const { data: att } = await supabase
+      .from("attendance_events")
+      .select("child_id, kind, occurred_at")
+      .in("child_id", childIds)
+      .gte("occurred_at", since)
+      .order("occurred_at", { ascending: false });
+    const seen = new Set<string>();
+    for (const e of (att ?? []) as { child_id: string; kind: string }[]) {
+      if (seen.has(e.child_id)) continue;
+      seen.add(e.child_id);
+      presence[e.child_id] = e.kind === "checkin" ? "present" : "absent";
+    }
+    for (const s of students)
+      if (!(s.id in presence)) presence[s.id] = "absent";
+  }
+
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-10">
       <header className="flex flex-col gap-1">
@@ -67,6 +90,17 @@ export default async function TurmaPage({
           Registre a rotina do dia — para uma criança ou várias de uma vez.
         </p>
       </header>
+
+      <section className="border-border bg-surface rounded-[var(--radius-lg)] border p-5">
+        <h2 className="text-foreground mb-3 text-base font-semibold">
+          Presença
+        </h2>
+        <PresenceBoard
+          classId={classId}
+          students={students}
+          status={presence}
+        />
+      </section>
 
       <ClassBoard classId={classId} students={students} />
     </main>
