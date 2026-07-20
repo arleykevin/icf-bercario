@@ -163,6 +163,12 @@ export default async function InicioPage() {
           >
             📅 Calendário
           </Link>
+          <Link
+            href="/comunicados"
+            className="border-border bg-surface hover:border-brand inline-flex min-h-[var(--touch-min)] items-center gap-2 rounded-[var(--radius-lg)] border px-4 text-sm font-medium"
+          >
+            📣 Comunicados
+          </Link>
         </div>
       ) : null}
 
