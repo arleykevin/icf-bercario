@@ -12,6 +12,10 @@ import {
 } from "@/features/medicamentos/components/administer-panel";
 import { summarizeDay } from "@/features/resumo/summarize-day";
 import { DaySummary } from "@/features/resumo/components/day-summary";
+import {
+  SuppliesPanel,
+  type SupplyItem,
+} from "@/features/suprimentos/components/supplies-panel";
 
 export const metadata: Metadata = {
   title: "Diário",
@@ -79,6 +83,15 @@ export default async function CriancaPage({
   const entries = (entriesData ?? []) as DiaryEntryRow[];
   const authorizations = (authData ?? []) as MedAuthorization[];
   const firstName = String(child.full_name).split(" ")[0];
+
+  // Suprimentos em aberto da criança.
+  const { data: suppliesData } = await supabase
+    .from("supply_requests")
+    .select("id, item, status")
+    .eq("child_id", childId)
+    .eq("status", "open")
+    .order("created_at", { ascending: false });
+  const supplies = (suppliesData ?? []) as SupplyItem[];
 
   // Reações/comentários dos pais por registro.
   const { data: reactionsData } = await supabase
@@ -210,6 +223,19 @@ export default async function CriancaPage({
             childId={childId}
             authorizations={authorizations}
             canAdminister={canWrite}
+          />
+        </section>
+      ) : null}
+
+      {supplies.length > 0 || canWrite ? (
+        <section className="border-border bg-surface flex flex-col gap-3 rounded-[var(--radius-lg)] border p-5">
+          <h2 className="text-foreground text-base font-semibold">
+            Suprimentos
+          </h2>
+          <SuppliesPanel
+            childId={childId}
+            supplies={supplies}
+            canManage={canWrite}
           />
         </section>
       ) : null}
