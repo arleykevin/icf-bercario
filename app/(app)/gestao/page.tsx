@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { InviteForm } from "@/features/convites/components/invite-form";
 import { ImportForm } from "@/features/onboarding/components/import-form";
@@ -8,6 +9,10 @@ import {
   MemberList,
   type TeamMember,
 } from "@/features/equipe/components/member-list";
+import {
+  DataRequestsList,
+  type AdminDataRequest,
+} from "@/features/direitos/components/data-requests-list";
 
 export const metadata: Metadata = {
   title: "Gestão",
@@ -46,6 +51,14 @@ export default async function GestaoPage() {
   }
 
   const orgId = adminOrg.organization_id as string;
+
+  // MFA obrigatório para admin (PLANO §5.3): a gestão exige sessão AAL2. Fail-open
+  // só se a leitura do AAL falhar (evita travar admin por erro transitório).
+  const { data: aal } =
+    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal && aal.currentLevel !== "aal2") {
+    redirect("/mfa?next=/gestao");
+  }
 
   const { data: students } = await supabase
     .from("children")
@@ -96,6 +109,50 @@ export default async function GestaoPage() {
     profileId: m.profile_id,
     role: m.role,
     fullName: nameById.get(m.profile_id) ?? "",
+  }));
+
+  // Pedidos LGPD em aberto (direitos do titular).
+  const { data: reqData } = await supabase
+    .from("data_requests")
+    .select("id, child_id, requested_by, request_type, status, note")
+    .eq("organization_id", orgId)
+    .eq("status", "open")
+    .order("created_at", { ascending: false });
+  const reqRows = (reqData ?? []) as {
+    id: string;
+    child_id: string;
+    requested_by: string;
+    request_type: string;
+    status: string;
+    note: string | null;
+  }[];
+  const childNameById = new Map(
+    ((students ?? []) as { id: string; full_name: string }[]).map((s) => [
+      s.id,
+      s.full_name,
+    ]),
+  );
+  const requesterIds = [...new Set(reqRows.map((r) => r.requested_by))];
+  const requesterNameById = new Map<string, string>();
+  if (requesterIds.length) {
+    const { data: reqProfiles } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", requesterIds);
+    for (const p of (reqProfiles ?? []) as {
+      id: string;
+      full_name: string;
+    }[]) {
+      requesterNameById.set(p.id, p.full_name);
+    }
+  }
+  const dataRequests: AdminDataRequest[] = reqRows.map((r) => ({
+    id: r.id,
+    childName: childNameById.get(r.child_id) ?? "Criança",
+    requesterName: requesterNameById.get(r.requested_by) ?? "Responsável",
+    request_type: r.request_type,
+    status: r.status,
+    note: r.note,
   }));
 
   const { data: enrollData } = await supabase
@@ -180,6 +237,25 @@ export default async function GestaoPage() {
           currentUserId={user!.id}
           members={members}
         />
+      </section>
+
+      <section
+        aria-labelledby="lgpd-heading"
+        className="border-border bg-surface flex flex-col gap-4 rounded-[var(--radius-lg)] border p-6"
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            id="lgpd-heading"
+            className="text-foreground text-lg font-semibold"
+          >
+            Solicitações LGPD
+          </h2>
+          <p className="text-muted text-sm">
+            Pedidos de acesso ou eliminação feitos pelos responsáveis. A
+            eliminação de dados de menor tem prazos legais — avalie caso a caso.
+          </p>
+        </div>
+        <DataRequestsList requests={dataRequests} />
       </section>
     </main>
   );

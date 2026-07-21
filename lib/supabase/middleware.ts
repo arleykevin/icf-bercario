@@ -93,6 +93,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/auth") ||
     pathname.startsWith("/convite") ||
     pathname.startsWith("/api/health") ||
+    pathname.startsWith("/api/cron") ||
     pathname.startsWith(CSP_REPORT_PATH) ||
     pathname.startsWith("/offline");
 

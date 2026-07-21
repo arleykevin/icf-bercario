@@ -265,6 +265,12 @@ export default async function InicioPage() {
             >
               Cadastrar crianças e convidar
             </Link>
+            <Link
+              href="/mfa?next=/inicio"
+              className="border-border bg-surface hover:border-brand inline-flex min-h-[var(--touch-min)] items-center rounded-[var(--radius-lg)] border px-4 text-sm font-medium"
+            >
+              🔐 Verificação em duas etapas
+            </Link>
           </div>
         </section>
       ) : null}

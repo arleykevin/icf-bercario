@@ -10,6 +10,10 @@ import {
   PickupsManager,
   type Pickup,
 } from "@/features/perfil/components/pickups-manager";
+import {
+  RightsPanel,
+  type MyDataRequest,
+} from "@/features/direitos/components/rights-panel";
 
 export const metadata: Metadata = {
   title: "Perfil da criança",
@@ -66,6 +70,17 @@ export default async function PerfilPage({
   const canManagePickups = isAdmin === true || isLegal === true;
   const healthData = (health ?? null) as HealthInitial;
   const pickups = (pickupsData ?? []) as Pickup[];
+
+  // Direitos do titular: só para responsável (LGPD art. 18). Vê os próprios pedidos.
+  let myRequests: MyDataRequest[] = [];
+  if (isGuard === true) {
+    const { data: reqData } = await supabase
+      .from("data_requests")
+      .select("id, request_type, status, note, resolution_note, created_at")
+      .eq("child_id", childId)
+      .order("created_at", { ascending: false });
+    myRequests = (reqData ?? []) as MyDataRequest[];
+  }
 
   // Nomes dos responsáveis (RLS de profiles permite co-responsável/professor/admin).
   const guards = (guardsData ?? []) as {
@@ -163,6 +178,20 @@ export default async function PerfilPage({
           </ul>
         )}
       </section>
+
+      {/* Direitos do titular (LGPD) — responsável */}
+      {isGuard === true ? (
+        <section className="border-border bg-surface flex flex-col gap-4 rounded-[var(--radius-lg)] border p-5">
+          <h2 className="text-foreground text-base font-semibold">
+            Meus direitos (LGPD)
+          </h2>
+          <RightsPanel
+            organizationId={orgId}
+            childId={childId}
+            requests={myRequests}
+          />
+        </section>
+      ) : null}
     </main>
   );
 }
