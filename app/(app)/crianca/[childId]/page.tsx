@@ -36,17 +36,24 @@ export default async function CriancaPage({
 
   const orgId = child.organization_id as string;
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userId = user?.id ?? "";
+
   const today = new Date().toISOString().slice(0, 10);
   const [
     { data: isAdmin },
     { data: teaches },
     { data: isLegal },
+    { data: isGuard },
     { data: entriesData },
     { data: authData },
   ] = await Promise.all([
     supabase.rpc("is_org_admin", { target_org: orgId }),
     supabase.rpc("teaches_child", { target_child: childId }),
     supabase.rpc("is_legal_guardian_of", { target_child: childId }),
+    supabase.rpc("is_guardian_of", { target_child: childId }),
     supabase
       .from("diary_entries")
       .select(
@@ -68,9 +75,64 @@ export default async function CriancaPage({
 
   const canWrite = isAdmin === true || teaches === true;
   const isLegalGuardian = isLegal === true;
+  const canReact = isGuard === true;
   const entries = (entriesData ?? []) as DiaryEntryRow[];
   const authorizations = (authData ?? []) as MedAuthorization[];
   const firstName = String(child.full_name).split(" ")[0];
+
+  // Reações/comentários dos pais por registro.
+  const { data: reactionsData } = await supabase
+    .from("diary_reactions")
+    .select("id, diary_entry_id, author_id, kind, comment")
+    .eq("child_id", childId);
+  const reactionRows = (reactionsData ?? []) as {
+    id: string;
+    diary_entry_id: string;
+    author_id: string;
+    kind: string;
+    comment: string | null;
+  }[];
+  const commentAuthorIds = [
+    ...new Set(
+      reactionRows.filter((r) => r.kind === "comment").map((r) => r.author_id),
+    ),
+  ];
+  const authorName: Record<string, string> = {};
+  if (commentAuthorIds.length > 0) {
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", commentAuthorIds);
+    for (const p of (profs ?? []) as { id: string; full_name: string }[]) {
+      authorName[p.id] = p.full_name?.split(" ")[0] ?? "Responsável";
+    }
+  }
+  const reactionsByEntry: Record<
+    string,
+    {
+      heartCount: number;
+      myHeartId: string | null;
+      comments: { id: string; author: string; text: string; mine: boolean }[];
+    }
+  > = {};
+  for (const r of reactionRows) {
+    const e = (reactionsByEntry[r.diary_entry_id] ??= {
+      heartCount: 0,
+      myHeartId: null,
+      comments: [],
+    });
+    if (r.kind === "heart") {
+      e.heartCount++;
+      if (r.author_id === userId) e.myHeartId = r.id;
+    } else if (r.kind === "comment" && r.comment) {
+      e.comments.push({
+        id: r.id,
+        author: authorName[r.author_id] ?? "Responsável",
+        text: r.comment,
+        mine: r.author_id === userId,
+      });
+    }
+  }
 
   // Resumo do dia: agrega os eventos de hoje (fuso da escola) num digest.
   const dayKey = (iso: string) =>
@@ -153,7 +215,12 @@ export default async function CriancaPage({
       ) : null}
 
       <section aria-label="Linha do tempo">
-        <Timeline entries={entries} mediaUrls={mediaUrls} />
+        <Timeline
+          entries={entries}
+          mediaUrls={mediaUrls}
+          reactionsByEntry={reactionsByEntry}
+          canReact={canReact}
+        />
       </section>
     </main>
   );

@@ -1,4 +1,12 @@
 import { ENTRY_META, summarizeEntry, type DiaryEntryRow } from "../entries";
+import { EntryReactions } from "./entry-reactions";
+import type { EntryReactions as Reactions } from "../reactions";
+
+const EMPTY_REACTIONS: Reactions = {
+  heartCount: 0,
+  myHeartId: null,
+  comments: [],
+};
 
 const TZ = "America/Sao_Paulo";
 
@@ -33,9 +41,13 @@ function dayHeading(key: string): string {
 export function Timeline({
   entries,
   mediaUrls = {},
+  reactionsByEntry = {},
+  canReact = false,
 }: {
   entries: DiaryEntryRow[];
   mediaUrls?: Record<string, string>;
+  reactionsByEntry?: Record<string, Reactions>;
+  canReact?: boolean;
 }) {
   if (entries.length === 0) {
     return (
@@ -70,6 +82,8 @@ export function Timeline({
                 mediaUrl={
                   entry.media_path ? mediaUrls[entry.media_path] : undefined
                 }
+                reactions={reactionsByEntry[entry.id] ?? EMPTY_REACTIONS}
+                canReact={canReact}
               />
             ))}
           </ul>
@@ -82,9 +96,13 @@ export function Timeline({
 function EntryCard({
   entry,
   mediaUrl,
+  reactions,
+  canReact,
 }: {
   entry: DiaryEntryRow;
   mediaUrl?: string;
+  reactions: Reactions;
+  canReact: boolean;
 }) {
   const meta = ENTRY_META[entry.entry_type] ?? ENTRY_META.note;
   const isHealth = meta.tone === "health";
@@ -137,6 +155,12 @@ function EntryCard({
             className="border-border mt-1 max-h-72 w-full rounded-[var(--radius-lg)] border object-cover"
           />
         ) : null}
+        <EntryReactions
+          childId={entry.child_id}
+          entryId={entry.id}
+          reactions={reactions}
+          canReact={canReact}
+        />
       </div>
     </li>
   );
