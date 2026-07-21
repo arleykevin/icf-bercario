@@ -81,13 +81,14 @@ export default async function GestaoPage() {
 
   const { data: membersData } = await supabase
     .from("org_members")
-    .select("profile_id, role")
+    .select("id, profile_id, role")
     .eq("organization_id", orgId)
     .eq("is_active", true)
     .is("deleted_at", null)
     .neq("role", "guardian")
     .order("role");
   const memberRows = (membersData ?? []) as {
+    id: string;
     profile_id: string;
     role: string;
   }[];
@@ -106,6 +107,7 @@ export default async function GestaoPage() {
     ]),
   );
   const members: TeamMember[] = memberRows.map((m) => ({
+    membershipId: m.id,
     profileId: m.profile_id,
     role: m.role,
     fullName: nameById.get(m.profile_id) ?? "",

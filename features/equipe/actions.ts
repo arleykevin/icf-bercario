@@ -6,6 +6,32 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export type OffboardState = { error?: string; message?: string };
 
+/** Admin muda o papel de um membro (autorização/guard do último admin no RPC). */
+export async function setMemberRole(
+  membershipId: string,
+  newRole: string,
+): Promise<OffboardState> {
+  if (newRole !== "admin" && newRole !== "teacher" && newRole !== "staff") {
+    return { error: "Papel inválido." };
+  }
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Não autenticado." };
+
+  const { error } = await supabase.rpc("set_member_role", {
+    p_membership_id: membershipId,
+    p_new_role: newRole,
+  });
+  if (error) {
+    const safe = error.code === "P0001" || error.code === "42501";
+    return { error: safe ? error.message : "Não foi possível mudar o papel." };
+  }
+  revalidatePath("/gestao");
+  return { message: "Papel atualizado." };
+}
+
 /**
  * Remove o acesso de um membro à escola. A autorização real acontece no RPC
  * `offboard_member` (SECURITY DEFINER, exige is_org_admin, trava o último admin e

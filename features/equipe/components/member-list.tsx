@@ -1,20 +1,20 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { offboardMember, type OffboardState } from "../actions";
+import { offboardMember, setMemberRole, type OffboardState } from "../actions";
 
 export type TeamMember = {
+  membershipId: string;
   profileId: string;
   fullName: string;
   role: string;
 };
 
-const ROLE_LABEL: Record<string, string> = {
-  admin: "Administrador(a)",
-  teacher: "Professor(a)",
-  staff: "Equipe",
-  guardian: "Responsável",
-};
+const ROLE_OPTIONS = [
+  { value: "admin", label: "Administrador(a)" },
+  { value: "teacher", label: "Professor(a)" },
+  { value: "staff", label: "Equipe" },
+] as const;
 
 /**
  * Lista a equipe da escola e permite ao admin remover o acesso de alguém
@@ -65,6 +65,7 @@ function MemberRow({
   const [confirming, setConfirming] = useState(false);
   const [result, setResult] = useState<OffboardState | null>(null);
   const [pending, startTransition] = useTransition();
+  const [roleMsg, setRoleMsg] = useState<string | null>(null);
   const done = result?.message != null;
 
   function remove() {
@@ -75,6 +76,14 @@ function MemberRow({
     });
   }
 
+  function changeRole(newRole: string) {
+    if (newRole === member.role) return;
+    startTransition(async () => {
+      const res = await setMemberRole(member.membershipId, newRole);
+      setRoleMsg(res.error ?? "Papel atualizado.");
+    });
+  }
+
   return (
     <li className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-lg)] border px-4 py-3">
       <div className="flex flex-col">
@@ -82,9 +91,33 @@ function MemberRow({
           {member.fullName || "(sem nome)"}
           {isSelf ? " (você)" : ""}
         </span>
-        <span className="text-muted text-xs">
-          {ROLE_LABEL[member.role] ?? member.role}
-        </span>
+        {done ? null : (
+          <select
+            aria-label={`Papel de ${member.fullName || "membro"}`}
+            defaultValue={member.role}
+            onChange={(e) => changeRole(e.target.value)}
+            disabled={pending}
+            className="border-border bg-surface text-muted mt-1 w-fit rounded-[var(--radius-lg)] border px-2 py-1 text-xs disabled:opacity-60"
+          >
+            {ROLE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        )}
+        {roleMsg ? (
+          <span
+            role="status"
+            className={
+              roleMsg === "Papel atualizado."
+                ? "text-muted mt-1 text-xs"
+                : "text-critical mt-1 text-xs"
+            }
+          >
+            {roleMsg}
+          </span>
+        ) : null}
         {result?.error ? (
           <span role="alert" className="text-critical mt-1 text-xs">
             {result.error}
