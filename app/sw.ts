@@ -37,4 +37,50 @@ const serwist = new Serwist({
   },
 });
 
+// --- Web Push (Fase 3) ---------------------------------------------------------
+// Payload SEMPRE genérico (o remetente nunca manda PII). Ao clicar, foca/abre o app.
+type PushPayload = { title?: string; body?: string; url?: string };
+
+self.addEventListener("push", (event) => {
+  let payload: PushPayload = {
+    title: "Instituto Cinthia França",
+    body: "Nova atualização no diário.",
+    url: "/inicio",
+  };
+  try {
+    if (event.data)
+      payload = { ...payload, ...(event.data.json() as PushPayload) };
+  } catch {
+    // corpo ausente/inválido — usa o genérico.
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title ?? "Atualização", {
+      body: payload.body ?? "",
+      tag: "icf",
+      data: { url: payload.url ?? "/inicio" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url =
+    (event.notification.data as { url?: string } | undefined)?.url ?? "/inicio";
+  event.waitUntil(
+    (async () => {
+      const clientsArr = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      for (const client of clientsArr) {
+        if ("focus" in client) {
+          await client.navigate(url);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    })(),
+  );
+});
+
 serwist.addEventListeners();

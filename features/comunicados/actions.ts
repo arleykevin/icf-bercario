@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { notifyGuardiansOfComm } from "@/lib/push/send";
 import { createCommSchema } from "./schema";
 
 export type CommState = { error?: string; message?: string };
@@ -75,6 +76,13 @@ export async function createCommunication(
       error:
         "Não foi possível publicar. Confira se você é admin ou professor desta turma.",
     };
+  }
+
+  // Notifica os responsáveis (payload genérico). Best-effort: no-op sem VAPID.
+  try {
+    await notifyGuardiansOfComm(org, classId);
+  } catch {
+    // não bloqueia a publicação do comunicado.
   }
 
   revalidatePath("/comunicados");

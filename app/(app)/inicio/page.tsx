@@ -5,6 +5,7 @@ import { ROLE_LABELS, isAppRole } from "@/lib/auth/roles";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
 import { acceptMyInvitations } from "@/features/convites/actions";
 import { PinSetup } from "@/features/tablet/components/pin-setup";
+import { NotificationsToggle } from "@/features/notificacoes/components/notifications-toggle";
 
 type PendingInvite = {
   invitation_id: string;
@@ -161,6 +162,8 @@ export default async function InicioPage() {
           </form>
         </section>
       ) : null}
+
+      {memberships.length > 0 ? <NotificationsToggle /> : null}
 
       {memberships.length > 0 ? (
         <div className="flex flex-wrap gap-2">
