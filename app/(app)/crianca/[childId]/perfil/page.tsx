@@ -14,6 +14,10 @@ import {
   RightsPanel,
   type MyDataRequest,
 } from "@/features/direitos/components/rights-panel";
+import {
+  DocumentsManager,
+  type ChildDocument,
+} from "@/features/documentos/components/documents-manager";
 
 export const metadata: Metadata = {
   title: "Perfil da criança",
@@ -70,6 +74,47 @@ export default async function PerfilPage({
   const canManagePickups = isAdmin === true || isLegal === true;
   const healthData = (health ?? null) as HealthInitial;
   const pickups = (pickupsData ?? []) as Pickup[];
+
+  // Documentos (vacina/laudo): responsável e admin enviam/veem.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userId = user?.id ?? "";
+  const canUploadDocs = isAdmin === true || isGuard === true;
+
+  const { data: docsData } = await supabase
+    .from("child_documents")
+    .select("id, title, doc_type, storage_path, uploaded_by")
+    .eq("child_id", childId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+  const docRows = (docsData ?? []) as {
+    id: string;
+    title: string;
+    doc_type: string;
+    storage_path: string;
+    uploaded_by: string | null;
+  }[];
+  const docUrls: Record<string, string> = {};
+  if (docRows.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from("child-documents")
+      .createSignedUrls(
+        docRows.map((d) => d.storage_path),
+        600,
+      );
+    for (const s of signed ?? []) {
+      if (s.path && s.signedUrl) docUrls[s.path] = s.signedUrl;
+    }
+  }
+  const documents: ChildDocument[] = docRows.map((d) => ({
+    id: d.id,
+    title: d.title,
+    docType: d.doc_type,
+    storagePath: d.storage_path,
+    url: docUrls[d.storage_path] ?? null,
+    canDelete: isAdmin === true || d.uploaded_by === userId,
+  }));
 
   // Direitos do titular: só para responsável (LGPD art. 18). Vê os próprios pedidos.
   let myRequests: MyDataRequest[] = [];
@@ -177,6 +222,16 @@ export default async function PerfilPage({
             ))}
           </ul>
         )}
+      </section>
+
+      {/* Documentos (vacina/laudo) */}
+      <section className="border-border bg-surface flex flex-col gap-4 rounded-[var(--radius-lg)] border p-5">
+        <h2 className="text-foreground text-base font-semibold">Documentos</h2>
+        <DocumentsManager
+          childId={childId}
+          documents={documents}
+          canUpload={canUploadDocs}
+        />
       </section>
 
       {/* Direitos do titular (LGPD) — responsável */}
