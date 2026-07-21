@@ -18,14 +18,14 @@ crianças e a comunicação com as famílias.
 
 ### 1.1 Categorias de dados
 
-| Categoria | Exemplos | Sensível? |
-|---|---|---|
-| Identificação da criança | nome, data de nascimento | Não (mas de menor) |
-| **Saúde da criança** | alergias, restrições, tipo sanguíneo, febre, medicamento | **Sim (art. 11)** |
-| Rotina | alimentação, sono, troca, humor, atividades, fotos | Não |
-| Identificação de adultos | nome, e-mail, telefone de responsáveis e equipe | Não |
-| Autorizados a retirar | nome, vínculo, telefone (**sem RG** — minimização) | Não |
-| Registros de acesso | logs de autenticação/rate limit (IP hasheado) | Não |
+| Categoria                | Exemplos                                                 | Sensível?          |
+| ------------------------ | -------------------------------------------------------- | ------------------ |
+| Identificação da criança | nome, data de nascimento                                 | Não (mas de menor) |
+| **Saúde da criança**     | alergias, restrições, tipo sanguíneo, febre, medicamento | **Sim (art. 11)**  |
+| Rotina                   | alimentação, sono, troca, humor, atividades, fotos       | Não                |
+| Identificação de adultos | nome, e-mail, telefone de responsáveis e equipe          | Não                |
+| Autorizados a retirar    | nome, vínculo, telefone (**sem RG** — minimização)       | Não                |
+| Registros de acesso      | logs de autenticação/rate limit (IP hasheado)            | Não                |
 
 ### 1.2 Finalidades e base legal
 
@@ -52,11 +52,11 @@ criança (ver §4).
 
 ## 3. Agentes e operadores (transferência)
 
-| Operador | Papel | Local | DPA |
-|---|---|---|---|
-| Supabase | Banco/Auth/Storage | «us-west-2 (EUA)» | ⚠️ assinar |
-| Sentry | Observabilidade (com scrubbing de PII) | «…» | ⚠️ assinar |
-| Provedor de e-mail/push | Avisos | «a definir» | ⚠️ assinar |
+| Operador                | Papel                                  | Local             | DPA        |
+| ----------------------- | -------------------------------------- | ----------------- | ---------- |
+| Supabase                | Banco/Auth/Storage                     | «us-west-2 (EUA)» | ⚠️ assinar |
+| Sentry                  | Observabilidade (com scrubbing de PII) | «…»               | ⚠️ assinar |
+| Provedor de e-mail/push | Avisos                                 | «a definir»       | ⚠️ assinar |
 
 > **Transferência internacional:** o projeto atual está em região dos EUA. Avaliar
 > mover para região no Brasil (sa-east-1) ou fundamentar a transferência (art. 33) e
@@ -64,12 +64,12 @@ criança (ver §4).
 
 ## 4. Retenção e eliminação (tabela de temporalidade)
 
-| Dado | Prazo após a saída da criança | Mecanismo |
-|---|---|---|
-| Diário de rotina + fotos | **90 dias** (ajustável por escola) | `run_diary_retention` + cron (`/api/cron/retention`) |
-| Registros de **saúde/medicamento** | prazo de **responsabilização** «definir» | retidos (não purgados) |
-| Comunicados / presença | registro institucional «definir» | retidos |
-| Logs de acesso | ~6 meses (Marco Civil art. 15) | `rate_limit_gc` |
+| Dado                               | Prazo após a saída da criança            | Mecanismo                                            |
+| ---------------------------------- | ---------------------------------------- | ---------------------------------------------------- |
+| Diário de rotina + fotos           | **90 dias** (ajustável por escola)       | `run_diary_retention` + cron (`/api/cron/retention`) |
+| Registros de **saúde/medicamento** | prazo de **responsabilização** «definir» | retidos (não purgados)                               |
+| Comunicados / presença             | registro institucional «definir»         | retidos                                              |
+| Logs de acesso                     | ~6 meses (Marco Civil art. 15)           | `rate_limit_gc`                                      |
 
 A eliminação do diário/fotos é **automatizada e auditada** (registra evento em
 `audit_events`). **Confirmar os prazos em «definir» com o jurídico.**
@@ -83,29 +83,29 @@ tratada caso a caso por causa dos prazos legais de saúde.
 
 ## 6. Medidas de segurança (implementadas)
 
-| Medida | Onde |
-|---|---|
-| RLS **deny-by-default** multi-tenant, testes pgTAP + meta-teste no CI | `supabase/migrations`, `supabase/tests` |
-| Registros sensíveis **imutáveis** (medicamento, "Ciente", presença, auditoria) | append-only via RLS |
-| Autoria **fixada no servidor** por trigger; FK composta anti-forja cross-tenant | migrations |
-| **CSP** estrita por nonce + headers (HSTS, frame-ancestors) | `lib/security/csp.ts` |
-| **Rate limiting** + anti-enumeração no login | `lib/security/rate-limit.ts` |
-| **Offboarding** automatizado (corta acesso + revoga sessão) + auditoria | `offboard_member` |
-| **Sessão de tablet**: auto-logout + PIN de bloqueio (hash isolado) | `features/tablet` |
-| **MFA TOTP** obrigatório para admin (AAL2) | `features/mfa` |
-| **Scrubbing de PII** antes do Sentry; SW `NetworkOnly` em `/api` | `lib/observability/scrub.ts`, `app/sw.ts` |
-| Buckets **privados** + URLs assinadas de curta duração para fotos | `child-media` |
+| Medida                                                                          | Onde                                      |
+| ------------------------------------------------------------------------------- | ----------------------------------------- |
+| RLS **deny-by-default** multi-tenant, testes pgTAP + meta-teste no CI           | `supabase/migrations`, `supabase/tests`   |
+| Registros sensíveis **imutáveis** (medicamento, "Ciente", presença, auditoria)  | append-only via RLS                       |
+| Autoria **fixada no servidor** por trigger; FK composta anti-forja cross-tenant | migrations                                |
+| **CSP** estrita por nonce + headers (HSTS, frame-ancestors)                     | `lib/security/csp.ts`                     |
+| **Rate limiting** + anti-enumeração no login                                    | `lib/security/rate-limit.ts`              |
+| **Offboarding** automatizado (corta acesso + revoga sessão) + auditoria         | `offboard_member`                         |
+| **Sessão de tablet**: auto-logout + PIN de bloqueio (hash isolado)              | `features/tablet`                         |
+| **MFA TOTP** obrigatório para admin (AAL2)                                      | `features/mfa`                            |
+| **Scrubbing de PII** antes do Sentry; SW `NetworkOnly` em `/api`                | `lib/observability/scrub.ts`, `app/sw.ts` |
+| Buckets **privados** + URLs assinadas de curta duração para fotos               | `child-media`                             |
 
 ## 7. Riscos residuais e plano de ação
 
-| Risco | Sev. | Ação pendente |
-|---|---|---|
-| Transferência internacional (região EUA) | Alto | Decidir região BR ou fundamentar + DPA |
-| DPO não publicado | Alto | Nomear e publicar antes do go-live |
-| CSP em report-only (não força) | Médio | Validar em preview e ligar `CSP_ENFORCE` |
-| Restore de backup não testado | Médio | Executar restore test (ver runbook) |
-| Pentest externo não realizado | Médio | Contratar antes do go-live |
-| Prazos de retenção não confirmados | Médio | DPO define a temporalidade |
+| Risco                                    | Sev.  | Ação pendente                            |
+| ---------------------------------------- | ----- | ---------------------------------------- |
+| Transferência internacional (região EUA) | Alto  | Decidir região BR ou fundamentar + DPA   |
+| DPO não publicado                        | Alto  | Nomear e publicar antes do go-live       |
+| CSP em report-only (não força)           | Médio | Validar em preview e ligar `CSP_ENFORCE` |
+| Restore de backup não testado            | Médio | Executar restore test (ver runbook)      |
+| Pentest externo não realizado            | Médio | Contratar antes do go-live               |
+| Prazos de retenção não confirmados       | Médio | DPO define a temporalidade               |
 
 ## 8. Conclusão
 

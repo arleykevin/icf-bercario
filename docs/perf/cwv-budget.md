@@ -6,14 +6,14 @@ adoção, não vaidade.
 
 ## Metas (em `budget.json`, formato Lighthouse)
 
-| Métrica | Meta | Por quê |
-|---|---|---|
-| LCP | ≤ 2,5 s | conteúdo principal visível |
-| TTI | ≤ 3,5 s | interação (registrar rápido com 12+ bebês) |
-| TBT | ≤ 200 ms | responsividade ao toque |
-| CLS | ≤ 0,1 | sem "pulos" que causam toque errado |
-| JS | ≤ 300 KB | orçamento de script por rota |
-| Total | ≤ 900 KB | peso total por rota |
+| Métrica | Meta     | Por quê                                    |
+| ------- | -------- | ------------------------------------------ |
+| LCP     | ≤ 2,5 s  | conteúdo principal visível                 |
+| TTI     | ≤ 3,5 s  | interação (registrar rápido com 12+ bebês) |
+| TBT     | ≤ 200 ms | responsividade ao toque                    |
+| CLS     | ≤ 0,1    | sem "pulos" que causam toque errado        |
+| JS      | ≤ 300 KB | orçamento de script por rota               |
+| Total   | ≤ 900 KB | peso total por rota                        |
 
 ## Como medir
 

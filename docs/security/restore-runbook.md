@@ -35,16 +35,16 @@ implementar re-purga pós-restore. Registrar no RIPD.
 ## Evidência (preencher a cada execução)
 
 ```
-Data do teste: 
-Executor: 
-Ponto de restauração (PITR): 
-Dado-âncora conferido (sim/não): 
-Contagens conferem (sim/não): 
-RLS ativa no destino (sim/não): 
-Foto assinada abriu (sim/não): 
-RTO medido: 
-Destino descartado (sim/não): 
-Observações / ações: 
+Data do teste:
+Executor:
+Ponto de restauração (PITR):
+Dado-âncora conferido (sim/não):
+Contagens conferem (sim/não):
+RLS ativa no destino (sim/não):
+Foto assinada abriu (sim/não):
+RTO medido:
+Destino descartado (sim/não):
+Observações / ações:
 ```
 
 ## Cadência

@@ -5,18 +5,18 @@ governança LGPD em [`../lgpd/`](../lgpd/README.md).
 
 ## Controles implementados (Fase 0–2)
 
-| Controle | Onde | Verificado por |
-|---|---|---|
-| RLS deny-by-default multi-tenant | `supabase/migrations` | pgTAP + meta-teste `00_rls_enabled` (CI) |
-| Registros imutáveis (medicamento, "Ciente", presença, auditoria) | append-only via RLS | pgTAP |
-| Autoria fixada no servidor + FK composta anti-forja | triggers/migrations | pgTAP |
-| CSP estrita por nonce + headers (HSTS, frame-ancestors, etc.) | `lib/security/csp.ts` | auditoria adversarial |
-| Rate limiting só-falhas + anti-enumeração no login | `lib/security/rate-limit.ts` | pgTAP + auditoria |
-| Offboarding (corta acesso + revoga sessão) + auditoria imutável | `offboard_member` | pgTAP + auditoria |
-| Sessão de tablet: auto-logout + PIN isolado + inert no lock | `features/tablet` | auditoria |
-| MFA TOTP obrigatório para admin (AAL2) | `features/mfa` | revisão |
-| Retenção/eliminação automatizada + direitos do titular | `run_diary_retention`, `data_requests` | pgTAP + auditoria |
-| Scrubbing de PII antes do Sentry; SW NetworkOnly em `/api` | `lib/observability`, `app/sw.ts` | — |
+| Controle                                                         | Onde                                   | Verificado por                           |
+| ---------------------------------------------------------------- | -------------------------------------- | ---------------------------------------- |
+| RLS deny-by-default multi-tenant                                 | `supabase/migrations`                  | pgTAP + meta-teste `00_rls_enabled` (CI) |
+| Registros imutáveis (medicamento, "Ciente", presença, auditoria) | append-only via RLS                    | pgTAP                                    |
+| Autoria fixada no servidor + FK composta anti-forja              | triggers/migrations                    | pgTAP                                    |
+| CSP estrita por nonce + headers (HSTS, frame-ancestors, etc.)    | `lib/security/csp.ts`                  | auditoria adversarial                    |
+| Rate limiting só-falhas + anti-enumeração no login               | `lib/security/rate-limit.ts`           | pgTAP + auditoria                        |
+| Offboarding (corta acesso + revoga sessão) + auditoria imutável  | `offboard_member`                      | pgTAP + auditoria                        |
+| Sessão de tablet: auto-logout + PIN isolado + inert no lock      | `features/tablet`                      | auditoria                                |
+| MFA TOTP obrigatório para admin (AAL2)                           | `features/mfa`                         | revisão                                  |
+| Retenção/eliminação automatizada + direitos do titular           | `run_diary_retention`, `data_requests` | pgTAP + auditoria                        |
+| Scrubbing de PII antes do Sentry; SW NetworkOnly em `/api`       | `lib/observability`, `app/sw.ts`       | —                                        |
 
 Cada feature da Fase 2 passou por **auditoria adversarial** (subagente) com correção
 dos achados antes do commit — ver as mensagens de commit `Fase 2: …`.

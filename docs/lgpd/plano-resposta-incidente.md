@@ -6,12 +6,12 @@
 
 ## 1. Papéis
 
-| Papel | Responsável | Contato |
-|---|---|---|
-| Coordenação do incidente | «…» | «…» |
-| Encarregado (DPO) | «…» | «…» |
-| Técnico (dev/infra) | «…» | «…» |
-| Direção da Escola | «…» | «…» |
+| Papel                    | Responsável | Contato |
+| ------------------------ | ----------- | ------- |
+| Coordenação do incidente | «…»         | «…»     |
+| Encarregado (DPO)        | «…»         | «…»     |
+| Técnico (dev/infra)      | «…»         | «…»     |
+| Direção da Escola        | «…»         | «…»     |
 
 ## 2. O que é um incidente notificável
 
@@ -48,16 +48,16 @@ crianças**. Na dúvida, tratar como notificável.
 
 ```
 ID: INC-«aaaa-mm-dd-nn»
-Ciência (data/hora): 
-Detecção (como): 
-Dados/titulares afetados: 
-Sensibilidade (saúde de menor? sim/não): 
-Contenção (o que foi feito / quando): 
-Notificável? (sim/não + justificativa): 
-Notificação ANPD (data): 
-Notificação titulares/responsáveis (data): 
-Causa-raiz: 
-Ações de melhoria: 
+Ciência (data/hora):
+Detecção (como):
+Dados/titulares afetados:
+Sensibilidade (saúde de menor? sim/não):
+Contenção (o que foi feito / quando):
+Notificável? (sim/não + justificativa):
+Notificação ANPD (data):
+Notificação titulares/responsáveis (data):
+Causa-raiz:
+Ações de melhoria:
 ```
 
 ## 6. Ferramentas de apoio no sistema

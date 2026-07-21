@@ -11,11 +11,11 @@ npx web-push generate-vapid-keys
 
 Guarde e configure no ambiente:
 
-| Env | Onde | Público? |
-|---|---|---|
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | build (cliente + servidor) | sim |
-| `VAPID_PRIVATE_KEY` | server-only | **não** |
-| `VAPID_SUBJECT` | server-only (ex.: `mailto:contato@escola…`) | não |
+| Env                            | Onde                                        | Público? |
+| ------------------------------ | ------------------------------------------- | -------- |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | build (cliente + servidor)                  | sim      |
+| `VAPID_PRIVATE_KEY`            | server-only                                 | **não**  |
+| `VAPID_SUBJECT`                | server-only (ex.: `mailto:contato@escola…`) | não      |
 
 Sem essas variáveis o envio é **no-op** e o botão "Ativar notificações" não aparece —
 o resto do app funciona normalmente.

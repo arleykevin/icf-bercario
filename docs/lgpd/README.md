@@ -12,12 +12,12 @@ LGPD) e **dados pessoais sensíveis de saúde** (art. 11). Por isso a governanç
 
 ## Documentos
 
-| Documento | Base legal | Status |
-|---|---|---|
-| [RIPD / DPIA](./RIPD.md) | Art. 38 | Rascunho |
-| [Registro de Operações (ROPA)](./ROPA.md) | Art. 37 | Rascunho |
-| [Política de Privacidade](./politica-de-privacidade.md) | Art. 9 | Rascunho |
-| [Termos de Uso](./termos-de-uso.md) | — | Rascunho |
+| Documento                                                      | Base legal                     | Status   |
+| -------------------------------------------------------------- | ------------------------------ | -------- |
+| [RIPD / DPIA](./RIPD.md)                                       | Art. 38                        | Rascunho |
+| [Registro de Operações (ROPA)](./ROPA.md)                      | Art. 37                        | Rascunho |
+| [Política de Privacidade](./politica-de-privacidade.md)        | Art. 9                         | Rascunho |
+| [Termos de Uso](./termos-de-uso.md)                            | —                              | Rascunho |
 | [Plano de Resposta a Incidente](./plano-resposta-incidente.md) | Art. 48 · Res. CD/ANPD 15/2024 | Rascunho |
 
 ## Pendências para o go-live (decisões da instituição)
